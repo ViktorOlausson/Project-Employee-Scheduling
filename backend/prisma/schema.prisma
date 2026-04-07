@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../generated/prisma"
 }
 
@@ -9,13 +9,17 @@ datasource db {
 
 // Användare med roll (employer/employee)
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  password     String
-  role         Role      @default(EMPLOYEE)
-  employee     Employee? // Relation till Employee-profil
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String          @id @default(uuid())
+  email           String          @unique
+  password        String
+  role            Role            @default(EMPLOYEE)
+  firstName       String?
+  lastName        String?
+  loginCode       String?         @unique // För registrering av employees
+  availabilities  Availability[]
+  scheduleEntries ScheduleEntry[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@map("users")
 }
@@ -23,22 +27,6 @@ model User {
 enum Role {
   EMPLOYEE
   EMPLOYER
-}
-
-// Anställd med profilinfo
-model Employee {
-  id               String        @id @default(uuid())
-  firstName        String
-  lastName         String
-  loginCode        String        @unique // För registrering
-  user             User          @relation(fields: [userId], references: [id])
-  userId           String        @unique
-  availabilities   Availability[]
-  scheduleEntries  ScheduleEntry[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-
-  @@map("employees")
 }
 
 // Skift (morning, afternoon, night)
@@ -50,27 +38,27 @@ enum Shift {
 
 // Tillgänglighet: Anställd anger önskade skift per dag
 model Availability {
-  id         String    @id @default(uuid())
-  employee   Employee  @relation(fields: [employeeId], references: [id])
-  employeeId String
-  date       DateTime  // Datum för tillgänglighet
-  shift      Shift
-  createdAt  DateTime  @default(now())
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  date      DateTime // Datum för tillgänglighet
+  shift     Shift
+  createdAt DateTime @default(now())
 
-  @@unique([employeeId, date, shift]) // Unik kombination
+  @@unique([userId, date, shift]) // Unik kombination
   @@map("availabilities")
 }
 
 // Schemapost: Vem jobbar vilket skift på vilken dag
 model ScheduleEntry {
-  id         String    @id @default(uuid())
-  employee   Employee  @relation(fields: [employeeId], references: [id])
-  employeeId String
-  date       DateTime  // Arbetsdag
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  date       DateTime // Arbetsdag
   shift      Shift
-  assignedBy String?   // FK till User (employer som tilldelade)
-  createdAt  DateTime  @default(now())
+  assignedBy String?  // FK till User (employer som tilldelade)
+  createdAt  DateTime @default(now())
 
-  @@unique([employeeId, date, shift]) // Hindra dubbla skift
+  @@unique([userId, date, shift]) // Hindra dubbla skift
   @@map("schedule_entries")
-}   
+}

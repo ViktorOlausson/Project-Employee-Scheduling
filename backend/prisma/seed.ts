@@ -24,7 +24,7 @@ async function main() {
 
 	console.log(`✅ Employer created: ${gandalf.email}`);
 
-	// Skapa employees med kopplade användare
+	// Skapa employees direkt i users-tabellen
 	const employees = [
 		{ firstName: "Frodo", lastName: "Baggins", loginCode: "FRODO9" },
 		{ firstName: "Sam", lastName: "Gamgee", loginCode: "SAM123" },
@@ -41,22 +41,20 @@ async function main() {
 	];
 
 	for (const emp of employees) {
-		const user = await prisma.user.upsert({
+		await prisma.user.upsert({
 			where: { email: `${emp.firstName.toLowerCase()}@shire.net` },
-			update: {},
+			update: {
+				firstName: emp.firstName,
+				lastName: emp.lastName,
+				loginCode: emp.loginCode,
+			},
 			create: {
 				email: `${emp.firstName.toLowerCase()}@shire.net`,
 				password: "$2b$10$epgDo3.ebUWtQc.5q.1234567890abcdefg",
 				role: "EMPLOYEE",
-			},
-		});
-
-		await prisma.employee.upsert({
-			where: { userId: user.id },
-			update: {},
-			create: {
-				...emp,
-				userId: user.id,
+				firstName: emp.firstName,
+				lastName: emp.lastName,
+				loginCode: emp.loginCode,
 			},
 		});
 	}
