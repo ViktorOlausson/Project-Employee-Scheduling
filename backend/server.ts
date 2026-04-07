@@ -22,3 +22,25 @@ app.listen(PORT, () => {
 app.get("/ping", (req, res) => {
   res.json({ message: "pong" });
 });
+
+app.get("/users/employees/all", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { role: "EMPLOYEE" },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+    res.send(users);
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).json({
+        message: err.message,
+      });
+    }
+    res.status(500).send("Unknown error");
+  }
+});
