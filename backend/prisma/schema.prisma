@@ -1,13 +1,76 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" 
 }
+
+// Användare med roll (employer/employee)
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  password     String
+  role         Role      @default(EMPLOYEE)
+  employee     Employee? // Relation till Employee-profil
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  EMPLOYEE
+  EMPLOYER
+}
+
+// Anställd med profilinfo
+model Employee {
+  id               String        @id @default(uuid())
+  firstName        String
+  lastName         String
+  loginCode        String        @unique // För registrering
+  user             User          @relation(fields: [userId], references: [id])
+  userId           String        @unique
+  availabilities   Availability[]
+  scheduleEntries  ScheduleEntry[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@map("employees")
+}
+
+// Skift (morning, afternoon, night)
+enum Shift {
+  MORNING
+  AFTERNOON
+  NIGHT
+}
+
+// Tillgänglighet: Anställd anger önskade skift per dag
+model Availability {
+  id         String    @id @default(uuid())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  employeeId String
+  date       DateTime  // Datum för tillgänglighet
+  shift      Shift
+  createdAt  DateTime  @default(now())
+
+  @@unique([employeeId, date, shift]) // Unik kombination
+  @@map("availabilities")
+}
+
+// Schemapost: Vem jobbar vilket skift på vilken dag
+model ScheduleEntry {
+  id         String    @id @default(uuid())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  employeeId String
+  date       DateTime  // Arbetsdag
+  shift      Shift
+  assignedBy String?   // FK till User (employer som tilldelade)
+  createdAt  DateTime  @default(now())
+
+  @@unique([employeeId, date, shift]) // Hindra dubbla skift
+  @@map("schedule_entries")
+}   
