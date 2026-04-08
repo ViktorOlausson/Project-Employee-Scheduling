@@ -32,6 +32,8 @@ app.get("/users/employees/all", async (req, res) => {
         email: true,
         firstName: true,
         lastName: true,
+        Occupation: true,
+        role: true,
       },
     });
     res.send(users);
