@@ -9,7 +9,7 @@ datasource db {
 
 // Användare med roll (employer/employee)
 model User {
-  id              Int          @id @default(autoincrement()) // FIXME: seq id, not UUID, easy to read and use
+  id              Int          @id @default(autoincrement())
   email           String          @unique
   password        String
   role            Role            @default(EMPLOYEE)
