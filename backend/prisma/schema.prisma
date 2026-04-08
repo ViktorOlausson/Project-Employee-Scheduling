@@ -9,10 +9,11 @@ datasource db {
 
 // Användare med roll (employer/employee)
 model User {
-  id              String          @id @default(uuid()) // FIXME: seq id, not UUID, easy to read and use
+  id              Int          @id @default(autoincrement()) // FIXME: seq id, not UUID, easy to read and use
   email           String          @unique
   password        String
   role            Role            @default(EMPLOYEE)
+  Occupation      Occupation      @default(RUNNER)
   firstName       String?
   lastName        String?
   loginCode       String?         @unique // För registrering av employees
@@ -28,7 +29,13 @@ enum Role {
   EMPLOYEE
   EMPLOYER
 }
-//TODO: Enum occupation: runner,waiter, dishwasher, chef
+
+enum Occupation {
+  RUNNER
+  WAITER
+  DISHWASHER
+  CHEF
+}
 
 // Skift (morning, afternoon, night)
 enum Shift {
@@ -39,9 +46,9 @@ enum Shift {
 
 // Tillgänglighet: Anställd anger önskade skift per dag
 model Availability {
-  id        String   @id @default(uuid()) /// FIXME: seq id, not UUID, easy to read and use
+  id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
-  userId    String
+  userId    Int
   date      DateTime // Datum för tillgänglighet
   shift     Shift
   createdAt DateTime @default(now())
@@ -52,9 +59,9 @@ model Availability {
 
 // Schemapost: Vem jobbar vilket skift på vilken dag
 model ScheduleEntry {
-  id         String   @id @default(uuid()) // FIXME: seq id, not UUID, easy to read and use
+  id         Int      @id @default(autoincrement())
   user       User     @relation(fields: [userId], references: [id])
-  userId     String
+  userId     Int
   date       DateTime // Arbetsdag
   shift      Shift
   assignedBy String?  // FK till User (employer som tilldelade)
