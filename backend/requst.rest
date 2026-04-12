@@ -1,0 +1,23 @@
+GET http://localhost:3000/ping
+
+### 
+GET http://localhost:3000/users/employees/all
+
+###
+POST http://localhost:3000/add-user
+Content-Type: application/json
+
+{
+    "fistname": "Bilbo",
+    "lastname": "Baggins",
+    "password": "password"
+}   
+
+###
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+    "email": "frodo@shire.net",
+    "password": "FRODO9"
+}   
