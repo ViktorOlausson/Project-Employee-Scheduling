@@ -21,7 +21,7 @@ declare module "express-session" {
 // --- Zod schemas ---
 export const loginSchema = z.object({
 	email: z.email("Invalid email address."),
-	code: z.string().min(1, "Code is required."),
+	password: z.string().min(1, "Password is required."),
 });
 
 export const employeeRoleSchema = z.enum([

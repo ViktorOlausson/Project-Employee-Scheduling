@@ -1,6 +1,8 @@
 import express from "express";
 import { PrismaClient } from "./generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { loginSchema } from "./types/index.js";
+
 import "dotenv/config";
 
 const app = express();
@@ -47,17 +49,16 @@ app.get("/users/employees/all", async (req, res) => {
 	}
 });
 
-// Login with email and password and compare loginCode
+// -- Login with email and password and compare loginCode --
 app.post("/login", async (req, res) => {
 	try {
-		const { email, password } = req.body;
-
 		// Validate input
-		if (!email || !password) {
-			return res
-				.status(400)
-				.json({ error: "Email and loginCode are required" });
+		const result = loginSchema.safeParse(req.body);
+		if (!result.success) {
+			res.status(400).json({ error: result.error.message });
+			return;
 		}
+		const { email, password } = result.data;
 
 		// Find user by email
 		const user = await prisma.user.findUnique({
@@ -68,19 +69,18 @@ app.post("/login", async (req, res) => {
 		if (!user) {
 			return res
 				.status(401)
-				.json({ error: "Invalid credentials TEST user do not exist" });
+				.json({ error: "Invalid credentials, user do not exist" });
 		}
 
-		// Compare loginCode (assuming it's stored in DB; consider hashing in production)
+		// Compare loginCode
 		if (user.loginCode !== password) {
 			console.log(user.loginCode, password);
 			return res
 				.status(401)
-				.json({ error: "Invalid credentials TEST wrong loginCode" });
+				.json({ error: "Invalid credentials, wrong loginCode" });
 		}
 
-		// Optional: Generate session, JWT, etc.
-		// Example success response
+		// Success response
 		return res.status(200).json({
 			message: "Login successful",
 			userId: user.id,
