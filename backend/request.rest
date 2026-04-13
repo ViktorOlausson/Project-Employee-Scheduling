@@ -21,3 +21,18 @@ Content-Type: application/json
     "email": "frodo@shire.net",
     "password": "FRODO9"
 }   
+
+###
+PUT http://localhost:3000/availability/3
+Content-Type: application/json
+
+{   
+    "userId": 3,
+    "date": "2026-04-23",
+    "shift": "AFTERNOON"
+        
+}
+
+###
+
+GET http://localhost:3000/availability/2
