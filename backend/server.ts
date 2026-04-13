@@ -91,3 +91,45 @@ app.post("/login", async (req, res) => {
 		return res.status(500).json({ error: "Internal server error" });
 	}
 });
+
+//Get availablity and empolyeeID
+app.get("/availability/:employeeId", async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.employeeId)
+    const availability = await prisma.availability.findMany({
+      where: {userId: employeeId},
+    })
+
+    res.status(200).json(availability)
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" })
+  }
+});
+
+app.put("/availability/:employeeId", async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.employeeId)
+    const {date, shift} = req.body;
+
+    const availability = await prisma.availability.upsert({  //upsert är som if else, if (om where finns, updatera, annars skapa en)
+      where: {
+        userId_date_shift: {
+          userId: employeeId,
+          date: new Date(date),
+          shift: shift,
+        },
+      },
+      update: {},
+      create: {
+        userId: employeeId,
+        date: new Date(date),
+        shift: shift,
+      },
+    })
+    res.status(200).json(availability)
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" })
+  }
+})
