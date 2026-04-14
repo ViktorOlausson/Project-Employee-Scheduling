@@ -1,6 +1,6 @@
 # Employee Scheduling API – Getting Started
 
-### This project use this tools:
+### This project uses these tools::
 
 node.js - express - rest api - typescript - zod - JWT - bcrypt - prisma orm - postgres - insomnia - react - vite - logging winston - prettier - eslint - 599 modules in backend - 406 muduler in frontend.
 
