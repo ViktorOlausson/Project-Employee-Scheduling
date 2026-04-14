@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import api from '../services/api'
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import api from "../services/api"
 
 interface Employee {
   id: number
@@ -13,15 +14,16 @@ interface Employee {
 const EmployeeListPage = () => {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await api.get('/users/employees/all')
+        const response = await api.get("/users/employees/all")
         setEmployees(response.data)
       } catch (err) {
-        setError('Could not fetch employees')
+        setError("Could not fetch employees")
       } finally {
         setLoading(false)
       }
@@ -32,7 +34,15 @@ const EmployeeListPage = () => {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">All Employees</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">All Employees</h1>
+        <button
+          onClick={() => navigate("/employees/register")}
+          className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 cursor-pointer"
+        >
+          Register new employee
+        </button>
+      </div>
 
       {loading && <p>Loading...</p>}
 
