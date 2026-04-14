@@ -3,24 +3,26 @@
 GET http://localhost:3000/users/employees/all
 
 ###
-POST http://localhost:3000/add-user
+POST http://localhost:3000/users
 Content-Type: application/json
 
 {
-    "fistname": "Bilbo",
-    "lastname": "Baggins",
-    "password": "1234",
-    "role": "EMPLOYER"
-    "loginCode": "1234" // servern sköter hashning av loginCode "bcrypt.hash("1234", 10)"
+    "email": "bilbo@shire.net",
+    "firstName": "Bilbo",
+    "lastName": "Baggins",
+    "Occupation": "RUNNER",
+    "role": "EMPLOYER",
+    "password": "1234Aa!",
+    "loginCode": "1234Aa!" 
 }   
 
 ###
-POST http://localhost:3000/login
+POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
     "email": "test@example.com",
-    "password": "F123456"
+    "password": "123456"
 }   
 
 ###
