@@ -11,12 +11,14 @@ const LoginPage = () => {
   const handleLogin = async () => {
     try {
       const response = await api.post('/auth/login', { email, password })
-      const { token, role } = response.data
-
+      const { token } = response.data
+  
       localStorage.setItem('token', token)
-      localStorage.setItem('role', role)
-
-      if (role === 'employer') {
+  
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      localStorage.setItem('role', payload.role)
+  
+      if (payload.role === 'EMPLOYER') {
         navigate('/employees')
       } else {
         navigate('/availability')
