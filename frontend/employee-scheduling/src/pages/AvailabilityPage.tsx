@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import api from '../services/api'
+import { useState, useEffect } from "react"
+import api from "../services/api"
 
-const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const shifts = ['Morning shift', 'Afternoon shift', 'Night shift']
+const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+const shifts = ["Morning shift", "Afternoon shift", "Night shift"]
 
 type Availability = {
   [shift: string]: {
@@ -11,15 +11,51 @@ type Availability = {
 }
 
 const initialAvailability: Availability = {
-  'Morning shift': { Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false },
-  'Afternoon shift': { Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false },
-  'Night shift': { Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false },
+  "Morning shift": { Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false },
+  "Afternoon shift": { Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false },
+  "Night shift": { Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false },
+}
+
+const getEmployeeId = () => {
+  const token = localStorage.getItem("token")
+  const payload = JSON.parse(atob(token!.split(".")[1]))
+  return payload.userId
 }
 
 const AvailabilityPage = () => {
   const [availability, setAvailability] = useState<Availability>(initialAvailability)
   const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        const employeeId = getEmployeeId()
+        const response = await api.get(`/availability/${employeeId}`)
+        const data = response.data
+
+        const updated = { ...initialAvailability }
+
+        for (const entry of data) {
+          const shift = entry.shift.charAt(0) + entry.shift.slice(1).toLowerCase() + " shift"
+          const date = new Date(entry.date)
+          const dayIndex = date.getDay()
+          const dayMap: { [key: number]: string } = { 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat", 0: "Sun" }
+          const day = dayMap[dayIndex]
+
+          if (updated[shift] && day) {
+            updated[shift][day] = true
+          }
+        }
+
+        setAvailability(updated)
+      } catch (err) {
+        console.error("Could not fetch availability", err)
+      }
+    }
+
+    fetchAvailability()
+  }, [])
 
   const toggle = (shift: string, day: string) => {
     const updated = { ...availability }
@@ -29,10 +65,28 @@ const AvailabilityPage = () => {
 
   const handleSave = async () => {
     try {
-      await api.put('/availability/:employeeId', { availability })
+      const employeeId = getEmployeeId()
+  
+      const entries = []
+  
+      for (const shift of shifts) {
+        for (const day of days) {
+          if (availability[shift][day]) {
+            entries.push({
+              date: new Date().toISOString(),
+              shift: shift.toUpperCase().replace(" SHIFT", ""),
+            })
+          }
+        }
+      }
+  
+      await api.put(`/availability/${employeeId}`, { entries })
+  
       setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
-      setError('Could not save availability')
+      setError("Could not save availability")
+      setTimeout(() => setError(""), 3000)
     }
   }
 
@@ -60,13 +114,13 @@ const AvailabilityPage = () => {
                 <td key={day} className="p-2 text-center">
                   <button
                     onClick={() => toggle(shift, day)}
-                    className={`w-20 py-1 rounded text-sm font-medium ${
+                    className={`w-20 py-1 rounded text-sm font-medium cursor-pointer ${
                       availability[shift][day]
-                        ? 'bg-green-400 text-white'
-                        : 'bg-gray-200 text-gray-600'
+                        ? "bg-green-400 text-white"
+                        : "bg-gray-200 text-gray-600"
                     }`}
                   >
-                    {availability[shift][day] ? 'Available' : 'Unavailable'}
+                    {availability[shift][day] ? "Available" : "Unavailable"}
                   </button>
                 </td>
               ))}
@@ -77,7 +131,7 @@ const AvailabilityPage = () => {
 
       <button
         onClick={handleSave}
-        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-sm font-medium"
+        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-sm font-medium cursor-pointer"
       >
         Save
       </button>
