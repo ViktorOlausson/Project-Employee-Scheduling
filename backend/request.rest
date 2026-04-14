@@ -1,4 +1,3 @@
-GET http://localhost:3000/ping
 
 ### 
 GET http://localhost:3000/users/employees/all
@@ -10,7 +9,9 @@ Content-Type: application/json
 {
     "fistname": "Bilbo",
     "lastname": "Baggins",
-    "password": "password"
+    "password": "1234",
+    "role": "EMPLOYER"
+    "loginCode": "1234" // servern sköter hashning av loginCode "bcrypt.hash("1234", 10)"
 }   
 
 ###
@@ -18,8 +19,8 @@ POST http://localhost:3000/login
 Content-Type: application/json
 
 {
-    "email": "frodo@shire.net",
-    "password": "FRODO9"
+    "email": "test@example.com",
+    "password": "F123456"
 }   
 
 ###
@@ -34,5 +35,7 @@ Content-Type: application/json
 }
 
 ###
+GET http://localhost:3000/availability/3
 
-GET http://localhost:3000/availability/2
+###
+POST http://localhost:3000/create-test-user   
