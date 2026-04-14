@@ -7,6 +7,7 @@ import logger from "./logger.js";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { z } from "zod";
 
 const app = express();
 app.use(express.json());
@@ -156,22 +157,54 @@ app.put("/availability/:employeeId", async (req, res) => {
   }
 });
 
+const RoleSchema = z.enum(["EMPLOYEE", "EMPLOYER"]);
+const OccupationSchema = z.enum(["RUNNER", "WAITER", "DISHWASHER", "CHEF"]);
+
+const userSchema = z.object({
+  email: z.email("Invalid email"),
+  firstName: z
+    .string()
+    .min(2, { message: "first name must contain at least 2 characters" }),
+  lastName: z
+    .string()
+    .min(2, { message: "last name must contain at least 2 characters" }),
+  Occupation: OccupationSchema,
+  role: RoleSchema,
+  password: z
+    .string()
+    .min(7, { message: "password must contain atleast 7 characters" })
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(
+      /[^A-Za-z0-9]/,
+      "Password must contain at least one special character",
+    ),
+});
 // -- Create test user -- OBS! rensa efter test
-app.post("/create-test-user", async (req, res) => {
+app.post("/users", async (req, res) => {
   try {
+    const dataBody = await req.body;
+    const validUser = userSchema.safeParse(dataBody);
+    if (!validUser.success) {
+      logger.error("not a valid user", validUser.error);
+      return res.status(400).json({ error: validUser.error.message });
+    }
+    const { email, firstName, lastName, Occupation, role, password } =
+      validUser.data;
     const user = await prisma.user.create({
       data: {
-        email: "test2@example.com",
-        firstName: "Test2",
-        lastName: "User2",
-        password: "123456",
-        loginCode: await bcrypt.hash("123456", 10),
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        Occupation: Occupation,
+        role: role,
+        password: password,
+        loginCode: await bcrypt.hash(password, 10),
       },
     });
-    logger.info(`created new test user: ${user}`);
+    logger.info(`created new user: ${user}`);
     res.status(201).json({
-      message: "Testanvändare skapad",
-      userId: user.id,
+      message: "User Created",
+      user: user,
     });
   } catch (error) {
     logger.error(error);
