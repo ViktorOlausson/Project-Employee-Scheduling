@@ -72,8 +72,12 @@ const AvailabilityPage = () => {
       for (const shift of shifts) {
         for (const day of days) {
           if (availability[shift][day]) {
+            const date = new Date()
+            const dayIndex = days.indexOf(day)
+            date.setDate(date.getDate() - date.getDay() + dayIndex + 1)
+  
             entries.push({
-              date: new Date().toISOString(),
+              date: date.toISOString(),
               shift: shift.toUpperCase().replace(" SHIFT", ""),
             })
           }
