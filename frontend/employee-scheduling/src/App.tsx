@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Navbar from "./components/Navbar"
+import ProtectedRoute from "./components/ProtectedRoute"
 import LoginPage from "./pages/LoginPage"
 import EmployeeListPage from "./pages/EmployeeListPage"
 import RegisterEmployeePage from "./pages/RegisterEmployeePage"
@@ -13,12 +14,38 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
-        <Route path="/employees" element={<><Navbar /><EmployeeListPage /></>} />
-        <Route path="/employees/register" element={<><Navbar /><RegisterEmployeePage /></>} />
-        <Route path="/schedule" element={<><Navbar /><JobSchedulePage /></>} />
-        <Route path="/availability" element={<><Navbar /><AvailabilityPage /></>} />
-        <Route path="/my-schedule" element={<><Navbar /><MySchedulePage /></>} />
-        <Route path="/schedule/:employeeId" element={<><Navbar /><WorkSchedulePage /></>} />
+
+        <Route path="/employees" element={
+          <ProtectedRoute allowedRole="EMPLOYER">
+            <Navbar /><EmployeeListPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/employees/register" element={
+          <ProtectedRoute allowedRole="EMPLOYER">
+            <Navbar /><RegisterEmployeePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/schedule" element={
+          <ProtectedRoute allowedRole="EMPLOYER">
+            <Navbar /><JobSchedulePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/schedule/:employeeId" element={
+          <ProtectedRoute allowedRole="EMPLOYER">
+            <Navbar /><WorkSchedulePage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/availability" element={
+          <ProtectedRoute allowedRole="EMPLOYEE">
+            <Navbar /><AvailabilityPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/my-schedule" element={
+          <ProtectedRoute allowedRole="EMPLOYEE">
+            <Navbar /><MySchedulePage />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   )
