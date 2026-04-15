@@ -166,6 +166,40 @@ app.put("/availability/:employeeId", async (req, res) => {
   }
 })
 
+app.delete("/availability/:availabilityId", async (req, res) => {
+  try {
+    const availabilityId = parseInt(req.params.availabilityId);
+
+    if (Number.isNaN(availabilityId)) {
+      return res.status(400).json({ message: "invalid availability id" });
+    }
+
+    const availability = await prisma.availability.findUnique({
+      where: { id: availabilityId },
+      select: { id: true },
+    });
+
+    if (!availability) {
+      return res.status(400).json({ message: "availability id not found" });
+    }
+
+    const deleted = await prisma.availability.delete({
+      where: { id: availabilityId },
+    });
+
+    return res.status(200).json(deleted);
+  } catch (err) {
+    if (err instanceof Error) {
+      logger.error("failed to delete availability", err);
+      return res
+        .status(500)
+        .json({ error: `Internal server error: ${err.message}` });
+    }
+    logger.error("unknown error", err);
+    return res.status(500).json({ error: `unknown error: ${err}` });
+  }
+});
+
 const RoleSchema = z.enum(["EMPLOYEE", "EMPLOYER"]);
 const OccupationSchema = z.enum(["RUNNER", "WAITER", "DISHWASHER", "CHEF"]);
 
