@@ -1,22 +1,4 @@
-//import "express-session";
 import { z } from "zod";
-
-export type Role = "ADMIN" | "CHEF" | "WAITER" | "RUNNER" | "DISHWASHER";
-
-/*
-export interface SessionUser {
-	id: string;
-	role: Role;
-	name: string;
-}
-
---- Express types ---
-declare module "express-session" {
-	interface SessionData {
-		user: SessionUser;
-	}
-}
-*/
 
 // --- Zod schemas ---
 export const loginSchema = z.object({
@@ -24,39 +6,26 @@ export const loginSchema = z.object({
 	password: z.string().min(1, "Password is required."),
 });
 
-export const employeeRoleSchema = z.enum([
-	"WAITER",
-	"RUNNER",
-	"DISHWASHER",
-	"CHEF",
-]);
+const RoleSchema = z.enum(["EMPLOYEE", "EMPLOYER"]);
 
-export const createEmployeeSchema = z.object({
-	firstName: z.string().min(1, "First name is required."),
-	lastName: z.string().min(1, "Last name is required."),
-	email: z.email("Invalid email address."),
-	code: z.string().min(1, "Code is required."),
-	/*.regex(
-			/^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).+$/,
-			"Måste innehålla minst en versal, en gemen och en siffra.",
+const OccupationSchema = z.enum(["RUNNER", "WAITER", "DISHWASHER", "CHEF"]);
+
+export const userSchema = z.object({
+	email: z.email("Invalid email"),
+	firstName: z
+		.string()
+		.min(2, { message: "first name must contain at least 2 characters" }),
+	lastName: z
+		.string()
+		.min(2, { message: "last name must contain at least 2 characters" }),
+	Occupation: OccupationSchema,
+	role: RoleSchema,
+	password: z
+		.string()
+		.min(7, { message: "password must contain atleast 7 characters" })
+		.regex(/[0-9]/, "Password must contain at least one number")
+		.regex(
+			/[^A-Za-z0-9]/,
+			"Password must contain at least one special character",
 		),
-        */
-	role: employeeRoleSchema,
 });
-
-export const updateEmployeeSchema = createEmployeeSchema.partial();
-
-// --- Derived types ---
-export type LoginBody = z.infer<typeof loginSchema>;
-export type CreateEmployeeBody = z.infer<typeof createEmployeeSchema>;
-export type UpdateEmployeeBody = z.infer<typeof updateEmployeeSchema>;
-export type EmployeeRole = z.infer<typeof employeeRoleSchema>;
-
-export interface EmployeeRecord {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	role: EmployeeRole;
-	createdAt: Date;
-}
