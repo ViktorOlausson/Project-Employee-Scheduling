@@ -9,7 +9,8 @@
         "dev": "nodemon --watch . --ext ts --exec \"set NODE_NO_WARNINGS=1&& node --loader ts-node/esm\" server.ts",
         "lint": "eslint",
         "lint:fix": "eslint --fix",
-        "migrate": "node scripts/migrate.mjs"
+        "migrate": "node scripts/migrate.mjs",
+        "seed:docker": "node --loader ts-node/esm prisma/docker-seed.ts"
     },
     "keywords": [],
     "author": "",
