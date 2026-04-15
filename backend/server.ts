@@ -223,22 +223,22 @@ app.get("/schedule", async (req, res) => {
             firstName: true,
             lastName: true,
             Occupation: true,
-          }
-        }
-      }
-    })
-    logger.info("fetch schedule")
-    res.status(200).json(schedule)
+          },
+        },
+      },
+    });
+    logger.info("fetch schedule");
+    res.status(200).json(schedule);
   } catch (error) {
-    logger.error(error)
-    res.status(500).json({ error: "Internal server error" })
+    logger.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
-})
+});
 
 // -- Update schedule --
 app.put("/schedule", async (req, res) => {
   try {
-    const { userId, date, shift } = req.body
+    const { userId, date, shift } = req.body;
 
     const entry = await prisma.scheduleEntry.upsert({
       where: {
@@ -246,40 +246,61 @@ app.put("/schedule", async (req, res) => {
           userId: userId,
           date: new Date(date),
           shift: shift,
-        }
+        },
       },
       update: {},
       create: {
         userId: userId,
         date: new Date(date),
         shift: shift,
-      }
-    })
+      },
+    });
 
-    logger.info(`updated schedule for userId: ${userId}`)
-    res.status(200).json(entry)
+    logger.info(`updated schedule for userId: ${userId}`);
+    res.status(200).json(entry);
   } catch (error) {
-    logger.error(error)
-    res.status(500).json({ error: "Internal server error" })
+    logger.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
-})
+});
 
 app.delete("/schedule", async (req, res) => {
   try {
-    const { userId, date, shift } = req.body
+    const { userId, date, shift } = req.body;
 
     await prisma.scheduleEntry.deleteMany({
       where: {
         userId: userId,
         date: new Date(date),
         shift: shift,
-      }
-    })
+      },
+    });
 
-    logger.info(`deleted schedule for userId: ${userId}`)
-    res.status(200).json({ message: "Deleted" })
+    logger.info(`deleted schedule for userId: ${userId}`);
+    res.status(200).json({ message: "Deleted" });
   } catch (error) {
-    logger.error(error)
-    res.status(500).json({ error: "Internal server error" })
+    logger.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
-})
+});
+
+app.get("/schedule/:id", async (req, res) => {
+  try {
+    logger.info("trying to fetch user schedule");
+    const userId = parseInt(req.params.id);
+    const schedule = await prisma.scheduleEntry.findMany({
+      where: { userId: userId },
+    });
+    if (schedule.length === 0) {
+      return res.status(404).json({ message: "unable to find schedule" });
+    }
+    return res.status(200).json(schedule);
+  } catch (err) {
+    if (err instanceof Error) {
+      logger.error("failed to fetch schedule for user", err);
+      res.status(500).json({ error: `Internal server error: ${err.message}` });
+    }
+    logger.error("unknown error", err);
+    res.status(500).json({ error: `unknown error: ${err}` });
+  }
+});
