@@ -109,6 +109,17 @@ app.get("/users/employees/all", async (req, res) => {
   }
 });
 
+app.get("/availability", async (req, res) => {
+  try {
+    const availability = await prisma.availability.findMany()
+    logger.info("fetch all availability")
+    res.status(200).json(availability)
+  } catch (error) {
+    logger.error(error)
+    res.status(500).json({ error: "Internal server error" })
+  }
+})
+
 // -- Get availablity and empolyeeID --
 app.get("/availability/:employeeId", async (req, res) => {
   try {
@@ -127,35 +138,33 @@ app.get("/availability/:employeeId", async (req, res) => {
 });
 
 // -- Update availability --
+// -- Update availability --
 app.put("/availability/:employeeId", async (req, res) => {
   try {
-    const employeeId = parseInt(req.params.employeeId);
-    const { date, shift } = req.body;
+    const employeeId = parseInt(req.params.employeeId)
+    const { entries } = req.body
 
-    const availability = await prisma.availability.upsert({
-      //upsert är som if else, if (om where finns, updatera, annars skapa en)
-      where: {
-        userId_date_shift: {
+    await prisma.availability.deleteMany({
+      where: { userId: employeeId }
+    })
+
+    if (entries && entries.length > 0) {
+      await prisma.availability.createMany({
+        data: entries.map((entry: { date: string, shift: string }) => ({
           userId: employeeId,
-          date: new Date(date),
-          shift: shift,
-        },
-      },
-      update: {},
-      create: {
-        userId: employeeId,
-        date: new Date(date),
-        shift: shift,
-      },
-    });
-    logger.info(`update availability for: ${employeeId}`);
-    res.status(200).json(availability);
+          date: new Date(entry.date),
+          shift: entry.shift,
+        }))
+      })
+    }
+
+    logger.info(`updated availability for: ${employeeId}`)
+    res.status(200).json({ message: "Availability updated" })
   } catch (error) {
-    logger.error(error);
-    // console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    logger.error(error)
+    res.status(500).json({ error: "Internal server error" })
   }
-});
+})
 
 const RoleSchema = z.enum(["EMPLOYEE", "EMPLOYER"]);
 const OccupationSchema = z.enum(["RUNNER", "WAITER", "DISHWASHER", "CHEF"]);
