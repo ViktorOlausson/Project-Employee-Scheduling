@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useMutation } from "@tanstack/react-query"
 import api from "../services/api"
 
 const RegisterEmployeePage = () => {
@@ -9,24 +10,37 @@ const RegisterEmployeePage = () => {
     const [occupation, setOccupation] = useState("RUNNER")
     const [loginCode, setLoginCode] = useState("")
     const [error, setError] = useState("")
-    const [success, setSuccess] = useState(false)
     const navigate = useNavigate()
 
-    const handleSubmit = async () => {
-        try {
-            await api.post("/users", {
-                firstName,
-                lastName,
-                email,
-                Occupation: occupation,
-                role: "EMPLOYEE",
-                password: loginCode,
-              })
-            setSuccess(true)
+    const { mutate: registerEmployee, isSuccess } = useMutation({
+        mutationFn: () => api.post("/users", {
+            firstName,
+            lastName,
+            email,
+            Occupation: occupation,
+            role: "EMPLOYEE",
+            password: loginCode,
+        }),
+        onSuccess: () => {
             setTimeout(() => navigate("/employees"), 1500)
-        } catch (err) {
+        },
+        onError: () => {
             setError("Could not register employee")
         }
+    })
+
+    const handleSubmit = () => {
+        const hasUpperCase = /[A-Z]/.test(loginCode)
+        const hasNumber = /[0-9]/.test(loginCode)
+        const hasSpecial = /[^A-Za-z0-9]/.test(loginCode)
+        const isLongEnough = loginCode.length >= 7
+
+        if (!isLongEnough) return setError("Password must be at least 7 characters")
+        if (!hasUpperCase) return setError("Password must contain at least one uppercase letter")
+        if (!hasNumber) return setError("Password must contain at least one number")
+        if (!hasSpecial) return setError("Password must contain at least one special character")
+
+        registerEmployee()
     }
 
     return (
@@ -42,7 +56,7 @@ const RegisterEmployeePage = () => {
             </div>
 
             {error && <p className="text-red-500 mb-4">{error}</p>}
-            {success && <p className="text-green-500 mb-4">Employee registered!</p>}
+            {isSuccess && <p className="text-green-500 mb-4">Employee registered!</p>}
 
             <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">First name</label>
@@ -93,9 +107,15 @@ const RegisterEmployeePage = () => {
                 <input
                     type="text"
                     value={loginCode}
-                    onChange={(e) => setLoginCode(e.target.value)}
+                    onChange={(e) => {
+                        setLoginCode(e.target.value)
+                        setError("")
+                    }}
                     className="w-full border rounded px-3 py-2 text-sm"
                 />
+                <p className="text-xs text-gray-400 mt-1">
+                    Min 7 characters, one uppercase, one number, one special character
+                </p>
             </div>
 
             <button

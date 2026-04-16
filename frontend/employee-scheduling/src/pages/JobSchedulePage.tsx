@@ -1,36 +1,9 @@
-import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 import api from "../services/api"
-
-const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-const shifts = ["MORNING", "AFTERNOON", "NIGHT"]
-
-interface ScheduleEntry {
-    id: number
-    userId: number
-    date: string
-    shift: string
-    user: {
-        id: number
-        firstName: string
-        lastName: string
-        Occupation: string
-    }
-}
-
-interface Employee {
-    id: number
-    firstName: string
-    lastName: string
-    Occupation: string
-}
-
-interface Availability {
-    id: number
-    userId: number
-    date: string
-    shift: string
-}
+import { days, shifts } from "../constants/availabilityConstants"
+import type { ScheduleEntry, Employee, Availability } from "../types/scheduleTypes"
+import { useSchedule, useAssignShift, useRemoveShift } from "../hooks/useSchedule"
 
 const getOccupationColor = (occupation: string) => {
     switch (occupation) {
@@ -43,90 +16,51 @@ const getOccupationColor = (occupation: string) => {
 }
 
 const JobSchedulePage = () => {
-    const [schedule, setSchedule] = useState<ScheduleEntry[]>([])
-    const [employees, setEmployees] = useState<Employee[]>([])
-    const [availability, setAvailability] = useState<Availability[]>([])
-    const [loading, setLoading] = useState(true)
     const navigate = useNavigate()
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [scheduleRes, employeesRes, availabilityRes] = await Promise.all([
-                    api.get("/schedule"),
-                    api.get("/users/employees/all"),
-                    api.get("/availability")
-                ])
-                setSchedule(scheduleRes.data)
-                setEmployees(employeesRes.data)
-                setAvailability(availabilityRes.data)
-            } catch (err) {
-                console.error("Could not fetch data", err)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchData()
-    }, [])
+    const { data: schedule = [], isLoading } = useSchedule()
+    const { data: employees = [] } = useQuery<Employee[]>({
+        queryKey: ["employees"],
+        queryFn: () => api.get("/users/employees/all").then(res => res.data)
+    })
+    const { data: availability = [] } = useQuery<Availability[]>({
+        queryKey: ["availability"],
+        queryFn: () => api.get("/availability").then(res => res.data)
+    })
 
-    const assignShift = async (employeeId: number, day: string, shift: string) => {
-        try {
-            const alreadyWorkingThatDay = shifts.some(s =>
-                getAssigned(day, s).some(entry => entry.userId === employeeId)
-            )
-            if (alreadyWorkingThatDay) return
-
-            const date = new Date()
-            const dayIndex = days.indexOf(day)
-            date.setDate(date.getDate() - date.getDay() + dayIndex + 1)
-
-            await api.put("/schedule", {
-                userId: employeeId,
-                date: date.toISOString(),
-                shift: shift,
-            })
-
-            const scheduleRes = await api.get("/schedule")
-            setSchedule(scheduleRes.data)
-        } catch (err) {
-            console.error("Could not assign shift", err)
-        }
-    }
-
-    const removeShift = async (entry: ScheduleEntry) => {
-        try {
-            await api.delete("/schedule", {
-                data: {
-                    userId: entry.userId,
-                    date: entry.date,
-                    shift: entry.shift,
-                }
-            })
-
-            const scheduleRes = await api.get("/schedule")
-            setSchedule(scheduleRes.data)
-        } catch (err) {
-            console.error("Could not remove shift", err)
-        }
-    }
+    const { mutate: assignShift } = useAssignShift()
+    const { mutate: removeShift } = useRemoveShift()
 
     const getAssigned = (day: string, shift: string) => {
-        return schedule.filter(entry => {
-            const entryDay = new Date(entry.date).getDay()
-            const dayIndex = days.indexOf(day) + 1
+        return schedule.filter((entry: ScheduleEntry) => {
+            const entryDay = (new Date(entry.date).getDay() + 6) % 7
+            const dayIndex = days.indexOf(day)
             return entryDay === dayIndex && entry.shift === shift
         })
     }
 
     const isAvailable = (employeeId: number, day: string, shift: string) => {
-        return availability.some(entry => {
-            const entryDay = new Date(entry.date).getDay()
-            const dayIndex = days.indexOf(day) + 1
-            return entry.userId === employeeId && entryDay === dayIndex && entry.shift === shift.toUpperCase().replace(" SHIFT", "")
-        })
+        return availability.some((entry: Availability) =>
+            entry.userId === employeeId &&
+            entry.dayOfWeek === day &&
+            entry.shift === shift
+        )
     }
 
-    if (loading) return <p className="p-8">Loading...</p>
+    const handleAssign = (employeeId: number, day: string, shift: string) => {
+        const alreadyWorkingThatDay = shifts.some(s =>
+            getAssigned(day, s).some((entry: ScheduleEntry) => entry.userId === employeeId)
+        )
+        if (alreadyWorkingThatDay) return
+
+        const date = new Date()
+        const dayIndex = days.indexOf(day)
+        date.setDate(date.getDate() - date.getDay() + dayIndex + 1)
+
+        assignShift({ userId: employeeId, date: date.toISOString(), shift })
+    }
+
+    if (isLoading) return <p className="p-8">Loading...</p>
 
     return (
         <div className="p-8">
@@ -156,11 +90,11 @@ const JobSchedulePage = () => {
                             {days.map(day => (
                                 <td key={day} className="p-2 text-center border">
                                     <div className="flex flex-col gap-1">
-                                        {getAssigned(day, shift).map(entry => (
+                                        {getAssigned(day, shift).map((entry: ScheduleEntry) => (
                                             <div key={entry.id} className={`flex items-center justify-between text-xs px-2 py-1 rounded ${getOccupationColor(entry.user.Occupation)}`}>
                                                 <span>{entry.user.firstName}</span>
                                                 <button
-                                                    onClick={() => removeShift(entry)}
+                                                    onClick={() => removeShift({ userId: entry.userId, date: entry.date, shift: entry.shift })}
                                                     className="ml-2 text-red-400 hover:text-red-600 cursor-pointer"
                                                 >
                                                     ×
@@ -170,29 +104,37 @@ const JobSchedulePage = () => {
                                         <select
                                             onChange={(e) => {
                                                 if (e.target.value) {
-                                                    assignShift(parseInt(e.target.value), day, shift)
+                                                    handleAssign(parseInt(e.target.value), day, shift)
                                                     e.target.value = ""
                                                 }
                                             }}
                                             className="text-xs border rounded px-1 py-1 cursor-pointer"
                                         >
                                             <option value="">+ Add</option>
-                                            {employees
-                                                .filter(emp => !shifts.some(s =>
-                                                    getAssigned(day, s).some(entry => entry.userId === emp.id)
-                                                ))
-                                                .map(emp => (
-                                                    <option
-                                                        key={emp.id}
-                                                        value={emp.id}
-                                                        style={{
-                                                            backgroundColor: isAvailable(emp.id, day, shift) ? '#dcfce7' : 'white',
-                                                            fontWeight: isAvailable(emp.id, day, shift) ? 'bold' : 'normal'
-                                                        }}
-                                                    >
-                                                        {isAvailable(emp.id, day, shift) ? "✓ " : ""}{emp.firstName} {emp.lastName}
-                                                    </option>
-                                                ))}
+                                            <optgroup label="Available">
+                                                {employees
+                                                    .filter((emp: Employee) =>
+                                                        isAvailable(emp.id, day, shift) &&
+                                                        !shifts.some(s => getAssigned(day, s).some((entry: ScheduleEntry) => entry.userId === emp.id))
+                                                    )
+                                                    .map((emp: Employee) => (
+                                                        <option key={emp.id} value={emp.id}>
+                                                            🟢 {emp.firstName} {emp.lastName}
+                                                        </option>
+                                                    ))}
+                                            </optgroup>
+                                            <optgroup label="Others">
+                                                {employees
+                                                    .filter((emp: Employee) =>
+                                                        !isAvailable(emp.id, day, shift) &&
+                                                        !shifts.some(s => getAssigned(day, s).some((entry: ScheduleEntry) => entry.userId === emp.id))
+                                                    )
+                                                    .map((emp: Employee) => (
+                                                        <option key={emp.id} value={emp.id}>
+                                                            {emp.firstName} {emp.lastName}
+                                                        </option>
+                                                    ))}
+                                            </optgroup>
                                         </select>
                                     </div>
                                 </td>

@@ -75,7 +75,7 @@ app.post("/auth/login", async (req, res) => {
 
     // Returnera token och role – till frontend
     logger.info(`login successful: ${user.email} role: ${user.role}`);
-    return res.status(200).json({ token, role: user.role });
+    return res.status(200).json({ token, role: user.role, userId: user.id })
   } catch (error) {
     logger.error(`Login error: ${error}`);
     return res.status(500).json({ error: "Internal server error" });
@@ -150,9 +150,9 @@ app.put("/availability/:employeeId", async (req, res) => {
 
     if (entries && entries.length > 0) {
       await prisma.availability.createMany({
-        data: entries.map((entry: { date: string; shift: string }) => ({
+        data: entries.map((entry: { dayOfWeek: string; shift: string }) => ({
           userId: employeeId,
-          date: new Date(entry.date),
+          dayOfWeek: entry.dayOfWeek,
           shift: entry.shift,
         })),
       });

@@ -49,11 +49,11 @@ model Availability {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  date      DateTime // Datum för tillgänglighet
+  dayOfWeek DayOfWeek // Datum för tillgänglighet
   shift     Shift
   createdAt DateTime @default(now())
 
-  @@unique([userId, date, shift]) // Unik kombination
+  @@unique([userId, dayOfWeek, shift]) // Unik kombination
   @@map("availabilities")
 }
 
@@ -69,4 +69,14 @@ model ScheduleEntry {
 
   @@unique([userId, date, shift]) // Hindra dubbla skift
   @@map("schedule_entries")
+}
+
+enum DayOfWeek {
+  Mon
+  Tue
+  Wed
+  Thu
+  Fri
+  Sat
+  Sun
 }
