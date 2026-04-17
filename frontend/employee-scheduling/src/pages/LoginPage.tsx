@@ -1,32 +1,37 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import api from '../services/api'
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import api from "../services/api"
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleLogin = async () => {
     try {
-      const response = await api.post('/auth/login', { email, password })
-      const { token } = response.data
-  
-      localStorage.setItem('token', token)
-  
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      localStorage.setItem('role', payload.role)
-  
-      if (payload.role === 'EMPLOYER') {
-        navigate('/employees')
+      setLoading(true)
+      const response = await api.post("/auth/login", { email, password })
+      const token = response.data.token
+      const role = response.data.role
+
+      localStorage.setItem("token", token)
+      localStorage.setItem("role", role)
+      localStorage.setItem("userId", response.data.userId)
+
+      if (role === "EMPLOYER") {
+        navigate("/employees")
       } else {
-        navigate('/availability')
+        navigate("/availability")
       }
     } catch (err) {
-      setError('Invalid email or password')
+      setError("Invalid email or password")
+    } finally {
+      setLoading(false)
     }
   }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -62,9 +67,10 @@ const LoginPage = () => {
 
         <button
           onClick={handleLogin}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm font-medium"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm font-medium cursor-pointer disabled:opacity-50"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </div>
     </div>

@@ -73,13 +73,13 @@ app.post("/auth/login", async (req, res) => {
 			{ expiresIn: "1h" },
 		);
 
-		// Returnera token och role – till frontend
-		logger.info(`login successful: ${user.email} role: ${user.role}`);
-		return res.status(200).json({ token, role: user.role });
-	} catch (error) {
-		logger.error(`Login error: ${error}`);
-		return res.status(500).json({ error: "Internal server error" });
-	}
+    // Returnera token och role – till frontend
+    logger.info(`login successful: ${user.email} role: ${user.role}`);
+    return res.status(200).json({ token, role: user.role, userId: user.id })
+  } catch (error) {
+    logger.error(`Login error: ${error}`);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // -- Get all employees --
@@ -148,15 +148,15 @@ app.put("/availability/:employeeId", async (req, res) => {
 			where: { userId: employeeId },
 		});
 
-		if (entries && entries.length > 0) {
-			await prisma.availability.createMany({
-				data: entries.map((entry: { date: string; shift: string }) => ({
-					userId: employeeId,
-					date: new Date(entry.date),
-					shift: entry.shift,
-				})),
-			});
-		}
+    if (entries && entries.length > 0) {
+      await prisma.availability.createMany({
+        data: entries.map((entry: { dayOfWeek: string; shift: string }) => ({
+          userId: employeeId,
+          dayOfWeek: entry.dayOfWeek,
+          shift: entry.shift,
+        })),
+      });
+    }
 
 		logger.info(`updated availability for: ${employeeId}`);
 		res.status(200).json({ message: "Availability updated" });

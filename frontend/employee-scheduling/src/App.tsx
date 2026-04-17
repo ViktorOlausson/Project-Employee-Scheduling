@@ -7,7 +7,6 @@ import RegisterEmployeePage from "./pages/RegisterEmployeePage"
 import JobSchedulePage from "./pages/JobSchedulePage"
 import AvailabilityPage from "./pages/AvailabilityPage"
 import MySchedulePage from "./pages/MySchedulePage"
-import WorkSchedulePage from "./pages/WorkSchedulePage"
 
 const App = () => {
   return (
@@ -28,11 +27,6 @@ const App = () => {
         <Route path="/schedule" element={
           <ProtectedRoute allowedRole="EMPLOYER">
             <Navbar /><JobSchedulePage />
-          </ProtectedRoute>
-        } />
-        <Route path="/schedule/:employeeId" element={
-          <ProtectedRoute allowedRole="EMPLOYER">
-            <Navbar /><WorkSchedulePage />
           </ProtectedRoute>
         } />
 
