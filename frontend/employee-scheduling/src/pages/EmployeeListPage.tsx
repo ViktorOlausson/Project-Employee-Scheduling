@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { useEmployees } from "../hooks/useEmployees"
 import EmployeeCard from "../components/EmployeeCard"
+import type {Employee } from "../types/scheduleTypes"
 
 const EmployeeListPage = () => {
     const { data: employees = [], isLoading, isError } = useEmployees()
@@ -22,7 +23,7 @@ const EmployeeListPage = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-                {employees.map((emp: any) => (
+                {employees.map((emp: Employee) => (
                     <EmployeeCard key={emp.id} employee={emp} />
                 ))}
             </div>
