@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import api from "../services/api"
-import { days, shifts } from "../constants/availabilityConstants"
+import { days, shifts, dayMap } from "../constants/availabilityConstants"
 import type { ScheduleEntry, Employee, Availability } from "../types/scheduleTypes"
 import { useSchedule, useAssignShift, useRemoveShift } from "../hooks/useSchedule"
 
@@ -33,19 +33,18 @@ const JobSchedulePage = () => {
 
     const getAssigned = (day: string, shift: string) => {
         return schedule.filter((entry: ScheduleEntry) => {
-            const entryDay = (new Date(entry.date).getDay() + 6) % 7
-            const dayIndex = days.indexOf(day)
-            return entryDay === dayIndex && entry.shift === shift
+          const entryDay = dayMap[new Date(entry.date).getDay()]
+          return entryDay === day && entry.shift === shift
         })
-    }
+      }
 
-    const isAvailable = (employeeId: number, day: string, shift: string) => {
+      const isAvailable = (employeeId: number, day: string, shift: string) => {
         return availability.some((entry: Availability) =>
-            entry.userId === employeeId &&
-            entry.dayOfWeek === day &&
-            entry.shift === shift
+          entry.userId === employeeId &&
+          entry.dayOfWeek === day &&
+          entry.shift === shift
         )
-    }
+      }
 
     const handleAssign = (employeeId: number, day: string, shift: string) => {
         const alreadyWorkingThatDay = shifts.some(s =>
