@@ -12,4 +12,17 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+
+export const deleteEmployee = async (id: number) => {
+	const res = await fetch(`http://localhost:3000/users/${id}`, {
+		method: "DELETE",
+	});
+
+	if (!res.ok) {
+		throw new Error("Failed to delete employee");
+	}
+
+	return res.json();
+};
+
 export default api

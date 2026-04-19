@@ -109,6 +109,66 @@ app.get("/users/employees/all", async (req, res) => {
 	}
 });
 
+// -- Delete user --
+/*app.delete("/users/:id", async (req, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+
+		if (Number.isNaN(userId)) {
+			return res.status(400).json({ message: "Invalid user id" });
+		}
+
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+		});
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		await prisma.user.delete({
+			where: { id: userId },
+		});
+
+		logger.info(`Deleted user: ${userId}`);
+		return res.status(200).json({ message: "User deleted" });
+
+	} catch (error) {
+		logger.error(error);
+		return res.status(500).json({ error: "Internal server error" });
+	}
+});*/
+app.delete("/users/:id", async (req, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+
+		if (Number.isNaN(userId)) {
+			return res.status(400).json({ message: "Invalid user id" });
+		}
+
+		// ✅ Delete dependent data FIRST
+		await prisma.availability.deleteMany({
+			where: { userId },
+		});
+
+		await prisma.scheduleEntry.deleteMany({
+			where: { userId },
+		});
+
+		// ✅ Then delete user
+		await prisma.user.delete({
+			where: { id: userId },
+		});
+
+		return res.status(200).json({ message: "User deleted" });
+
+	} catch (error) {
+		console.error(error);
+		return res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+
 // -- Get all availability --
 app.get("/availability", async (req, res) => {
 	try {
