@@ -1,4 +1,4 @@
-import { days, shifts } from "../constants/availabilityConstants"
+import { days, shifts, dayMap } from "../constants/availabilityConstants"
 import { useMySchedule } from "../hooks/useMySchedule"
 
 const MySchedulePage = () => {
@@ -6,11 +6,10 @@ const MySchedulePage = () => {
 
     const getShift = (day: string, shift: string) => {
         return schedule.find((entry: any) => {
-            const entryDay = new Date(entry.date).getDay()
-            const dayIndex = days.indexOf(day) + 1
-            return entryDay === dayIndex && entry.shift === shift
+          const entryDay = dayMap[new Date(entry.date).getDay()]
+          return entryDay === day && entry.shift === shift
         })
-    }
+      }
 
     if (isLoading) return <p className="p-8">Loading...</p>
     if (isError) return <p className="p-8 text-red-500">Could not fetch schedule</p>
